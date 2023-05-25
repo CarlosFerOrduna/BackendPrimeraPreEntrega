@@ -43,20 +43,31 @@ class CartManager {
         });
 
         if (cartExists && productsExists && haveIdProduct && haveQuantity && isValidQuantity) {
-            productsCart = productsCart.map((p) => {
-                let equalId = productsCart.filter((p2) => p2.idProduct === p.idProduct);
+            // por si llegaran a venir elementos repetidos, los limpio, pero acumulando el quantity de cada uno de los repetidos
+            let productsWithoutRepeats = productsCart.reduce((acc, e) => {
+                if (acc.indexOf(e.idProduct) === -1) {
+                    acc.push(e.idProduct);
+                }
+                return acc;
+            }, []);
+
+            productsWithoutRepeats = productsWithoutRepeats.map((p) => {
+                let repeated = productsCart.filter((p2) => p.idProduct === p2.idProduct);
 
                 return {
-                    id: p.id,
-                    quantity: equalId.reduce((acc, value) => (acc = acc + value)),
+                    idProduct: p.idProduct,
+                    quantity: repeated.reduce((acc, e) => {
+                        return acc + e.quantity;
+                    }, 0),
                 };
             });
+            // por si llegaran a venir elementos repetidos, los limpio, pero acumulando el quantity de cada uno de los repetidos
 
             this.carts = this.carts.map((c) => {
                 return c.id === id
                     ? {
                           id: c.id,
-                          products: productsCart ?? c.products,
+                          products: productsWithoutRepeats ?? c.products,
                       }
                     : c;
             });
