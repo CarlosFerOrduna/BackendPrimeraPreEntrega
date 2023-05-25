@@ -1,0 +1,1 @@
+[{"id":1,"title":"title","description":"description","code":"code1","price":"150","status":"true","stock":"20","category":"category","thumbnails":["$http://localhost:8080/Tumblr (1).jpg"]},{"id":2,"title":"title","description":"description","code":"code2","price":"150","status":"true","stock":"20","category":"category","thumbnails":["$http://localhost:8080/Tumblr (1).jpg"]}]
