@@ -41,7 +41,7 @@ class ProductManager {
             throw new Error(`stock is ${product.stock}`);
         }
 
-        if (!product.category || !isNaN(product.price)) {
+        if (!product.category || !isNaN(product.category)) {
             throw new Error(`category is ${product.category}`);
         }
 

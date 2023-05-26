@@ -38,7 +38,7 @@ class CartManager {
             throw new Error(`the cart with id ${id} does not exist`);
         }
 
-        const haveIdProduct = productsCart.every((p) => p?.idProduct);
+        const haveIdProduct = productsCart.every((p) => p?.idProduct || false);
         if (!haveIdProduct) {
             throw new Error(`Product id is ${productsCart.map((p) => p?.idProduct)}`);
         }
@@ -66,7 +66,7 @@ class CartManager {
         // y despues le sumo el quantity total al product que queda
         let productsWithoutRepeats = productsCart.reduce((acc, e) => {
             if (acc.indexOf(e.idProduct) === -1) {
-                acc.push(e.idProduct);
+                acc.push(e);
             }
             return acc;
         }, []);

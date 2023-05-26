@@ -50,8 +50,8 @@ routerApiCarts.get("/:cid/:pid", async (req, res) => {
 
 routerApiCarts.post("/", async (req, res) => {
     const idCart = await cartManager.createCart();
-    let products = req?.body ?? [{}];
-    let cart;
+    let products = req?.body?.products;
+    let cart = { id: idCart, products: [{}] };
 
     if (products.length > 0) {
         products = products.map((p) => {
@@ -67,7 +67,7 @@ routerApiCarts.post("/", async (req, res) => {
     return res.status(201).json({
         status: "success",
         msg: `Successfully created cart`,
-        data: cart ?? { id: idCart, products },
+        data: cart,
     });
 });
 
