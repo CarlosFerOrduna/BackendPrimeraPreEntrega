@@ -40,7 +40,7 @@ routerApiCarts.get("/:cid/:pid", async (req, res) => {
 
         return res.status(200).json({
             status: "success",
-            message: "Cart successfully found",
+            message: "Cart and product successfully found",
             data: result,
         });
     }
@@ -79,13 +79,11 @@ routerApiCarts.post("/:cid/products/:pid", async (req, res) => {
     if (idCart && idProduct && quantity) {
         const result = await cartManager.updateProductCart(idCart, idProduct, quantity);
 
-        if (typeof result === "object") {
-            return res.status(201).json({
-                status: "success",
-                msg: `Cart successfully updated`,
-                data: result,
-            });
-        }
+        return res.status(201).json({
+            status: "success",
+            msg: `Cart successfully updated`,
+            data: result,
+        });
     }
 
     throwNotFound(res);
@@ -98,13 +96,11 @@ routerApiCarts.put("/:cid", async (req, res) => {
     if (id && products) {
         const result = await cartManager.updateProductsCart(id, products);
 
-        if (typeof result === "object") {
-            return res.status(201).json({
-                status: "success",
-                msg: `Cart successfully updated`,
-                data: { id, products: products },
-            });
-        }
+        return res.status(201).json({
+            status: "success",
+            msg: `Cart successfully updated`,
+            data: result,
+        });
     }
 
     throwNotFound(res);

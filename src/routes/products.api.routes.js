@@ -1,3 +1,4 @@
+//@ts-check
 import express from "express";
 import productManager from "../services/ProductManager.js";
 import { uploader } from "../utils.js";
@@ -10,11 +11,13 @@ routerApiProducts.get("/", async (req, res) => {
     const limit = req?.query?.limit;
     const product = await productManager.getProducts();
 
-    if (!isNaN(limit)) {
+    if (limit && !isNaN(limit)) {
+        const limitNumber = parseInt(limit);
+
         return res.status(200).json({
             status: "success",
-            message: `limit = ${limit}`,
-            data: product.slice(0, limit),
+            message: `limit = ${limitNumber}`,
+            data: product.slice(0, limitNumber),
         });
     }
 
@@ -49,13 +52,11 @@ routerApiProducts.post("/", uploader.single("thumbnail"), async (req, res) => {
     if (product) {
         const newProduct = await productManager.addProduct(product);
 
-        if (typeof newProduct == "object") {
-            return res.status(201).json({
-                status: "success",
-                msg: `Successfully created product`,
-                data: newProduct,
-            });
-        }
+        return res.status(201).json({
+            status: "success",
+            msg: `Successfully created product`,
+            data: newProduct,
+        });
     }
 
     throwNotFound(res);
@@ -72,12 +73,12 @@ routerApiProducts.put("/:pid", uploader.single("file"), async (req, res) => {
             thumbnail: `$http://localhost:8080/${req?.file?.filename}` ?? null,
         };
 
-        await productManager.updateProduct(productUpdate);
+        const resultProduct = await productManager.updateProduct(productUpdate);
 
         return res.status(201).json({
             status: "success",
             msg: `Product successfully updated`,
-            data: productUpdate,
+            data: resultProduct,
         });
     }
 

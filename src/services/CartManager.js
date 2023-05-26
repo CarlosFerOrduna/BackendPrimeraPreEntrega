@@ -11,7 +11,8 @@ class CartManager {
     }
 
     createCart = async () => {
-        await this.#setCarts();
+        await this.#loadCarts();
+
         this.id =
             this.carts.length > 0 ? Math.max(...this.carts.map((c) => c.id)) + 1 : this.id + 1;
 
@@ -29,144 +30,173 @@ class CartManager {
     };
 
     updateProductsCart = async (id, productsCart) => {
-        await this.#setCarts();
+        await this.#loadCarts();
         const products = await ProductManager.getProducts();
 
-        const cartExists = this.carts.some((c) => c.id === id);
+        const existsCart = this.carts.some((c) => c.id === id);
+        if (!existsCart) {
+            throw new Error(`the cart with id ${id} does not exist`);
+        }
+
         const haveIdProduct = productsCart.every((p) => p?.idProduct);
+        if (!haveIdProduct) {
+            throw new Error(`Product id is ${productsCart.map((p) => p?.idProduct)}`);
+        }
+
         const haveQuantity = productsCart.every((p) => p?.quantity > 0);
-        const isValidQuantity = products.every((p) => {
-            return productsCart.map((pc) => pc.quantity <= p.stock);
-        });
+        if (!haveQuantity) {
+            throw new Error(`Product quantity is ${productsCart.map((p) => p.quantity)}`);
+        }
+
         const productsExists = productsCart.every((pc) => {
             return products.some((p) => p.id === pc.idProduct);
         });
-
-        if (cartExists && productsExists && haveIdProduct && haveQuantity && isValidQuantity) {
-            // por si llegaran a venir elementos repetidos, los limpio, pero acumulando el quantity de cada uno de los repetidos
-            let productsWithoutRepeats = productsCart.reduce((acc, e) => {
-                if (acc.indexOf(e.idProduct) === -1) {
-                    acc.push(e.idProduct);
-                }
-                return acc;
-            }, []);
-
-            productsWithoutRepeats = productsWithoutRepeats.map((p) => {
-                let repeated = productsCart.filter((p2) => p.idProduct === p2.idProduct);
-
-                return {
-                    idProduct: p.idProduct,
-                    quantity: repeated.reduce((acc, e) => {
-                        return acc + e.quantity;
-                    }, 0),
-                };
-            });
-            // por si llegaran a venir elementos repetidos, los limpio, pero acumulando el quantity de cada uno de los repetidos
-
-            this.carts = this.carts.map((c) => {
-                return c.id === id
-                    ? {
-                          id: c.id,
-                          products: productsWithoutRepeats ?? c.products,
-                      }
-                    : c;
-            });
-
-            await fs.writeFile(this.path, JSON.stringify(this.carts));
-
-            return this.getCartById(id);
+        if (!productsExists) {
+            throw new Error(`Product not exists`);
         }
 
-        let error;
+        const isValidQuantity = products.every((p) => {
+            return productsCart.map((pc) => pc.quantity <= p.stock);
+        });
+        if (!isValidQuantity) {
+            throw new Error(`The quantity of the product is greater than its stock`);
+        }
 
-        !haveIdProduct && (error = `Product id is ${productsCart.map((p) => p?.idProduct)}`);
-        !productsExists && (error = `Product not exists`);
-        !haveQuantity && (error = `Product quantity is ${productsCart.map((p) => p.quantity)}`);
-        !isValidQuantity && (error = `The quantity of the product is greater than its stock`);
-        !cartExists && (error = `the cart with id ${id} does not exist`);
+        // por si llegaran a venir elementos repetidos, primero limpio los repetidos,
+        // y despues le sumo el quantity total al product que queda
+        let productsWithoutRepeats = productsCart.reduce((acc, e) => {
+            if (acc.indexOf(e.idProduct) === -1) {
+                acc.push(e.idProduct);
+            }
+            return acc;
+        }, []);
 
-        return error;
+        productsWithoutRepeats = productsWithoutRepeats.map((p) => {
+            let repeated = productsCart.filter((p2) => p.idProduct === p2.idProduct);
+
+            return {
+                idProduct: p.idProduct,
+                quantity: repeated.reduce((acc, e) => {
+                    return acc + e.quantity;
+                }, 0),
+            };
+        });
+
+        this.carts = this.carts.map((c) => {
+            return c.id === id
+                ? {
+                      id: c.id,
+                      products: productsWithoutRepeats ?? c.products,
+                  }
+                : c;
+        });
+
+        await fs.writeFile(this.path, JSON.stringify(this.carts));
+
+        return this.getCartById(id);
     };
 
     updateProductCart = async (idCart, idProduct, quantity) => {
-        let cart = await this.getCartById(idCart);
-        let product = await ProductManager.getProductsById(idProduct);
+        this.#loadCarts();
+        const products = await ProductManager.getProducts();
 
-        if (typeof cart === "object" && typeof product === "object") {
-            if (cart.products.some((p) => p.idProduct === idProduct)) {
-                console.log(idProduct);
-                cart.products = cart.products.map((p) => {
-                    return p.idProduct === idProduct
-                        ? {
-                              idProduct: p.idProduct,
-                              quantity: p.quantity + quantity,
-                          }
-                        : p;
-                });
-            } else {
-                cart.products = [...cart.products, { idProduct, quantity }];
-            }
-
-            this.carts = this.carts.map((c) => {
-                return c.id === idCart ? cart : c;
-            });
-            await fs.writeFile(this.path, JSON.stringify(this.carts));
-
-            return cart;
+        const existsProduct = products.some((p) => p.id === idProduct);
+        if (!existsProduct) {
+            throw new Error(`Product with id ${idProduct} not exists`);
         }
 
-        return "Not found";
+        const existsCart = this.carts.some((c) => c.id === idCart);
+        if (!existsCart) {
+            throw new Error(`Cart with id ${idCart} not exists`);
+        }
+
+        let cart = this.carts.find((c) => c.id === idCart);
+
+        const existsProductInCart = cart.products.some((p) => p.idProduct === idProduct);
+        if (existsProductInCart) {
+            cart.products = cart.products.map((p) => {
+                return p.idProduct === idProduct
+                    ? {
+                          idProduct: p.idProduct,
+                          quantity: p.quantity + quantity,
+                      }
+                    : p;
+            });
+        } else {
+            cart.products = [...cart.products, { idProduct, quantity }];
+        }
+
+        this.carts = this.carts.map((c) => {
+            return c.id === idCart ? cart : c;
+        });
+
+        await fs.writeFile(this.path, JSON.stringify(this.carts));
+
+        return cart;
     };
 
     getCarts = async () => {
-        try {
-            await this.#setCarts();
-        } catch {
-            throw new Error("Something went wrong");
-        } finally {
-            return this.carts;
-        }
+        await this.#loadCarts();
+
+        return this.carts;
     };
 
     getCartById = async (id) => {
-        try {
-            await this.#setCarts();
-        } catch {
-            throw new Error("Something went wrong");
-        } finally {
-            return this.carts.find((c) => c.id === id) || "Not found";
+        await this.#loadCarts();
+
+        const existsCart = this.carts.some((c) => c.id === id);
+
+        if (!existsCart) {
+            throw new Error(`Cart with id ${id} not exists`);
         }
+
+        return this.carts.find((c) => c.id === id);
     };
 
     getProductByCartById = async (idCart, idProduct) => {
-        try {
-            await this.#setCarts();
-        } catch {
-            throw new Error("Something went wrong");
-        } finally {
-            const cart = this.carts.find((c) => c.id === idCart);
-            const product = cart.products.find((p) => p.idProduct === idProduct);
+        await this.#loadCarts();
+        const products = await ProductManager.getProducts();
 
-            return { id: cart.id, products: product } || "Not found";
+        const existsCart = this.carts.some((c) => c.id === idCart);
+
+        if (!existsCart) {
+            throw new Error(`Cart with id ${idCart} not exists`);
         }
+
+        const cart = this.carts.find((c) => c.id === idCart);
+
+        const existsProduct = products.some((p) => p.id === idProduct);
+
+        if (!existsProduct) {
+            throw new Error(`Product with id ${idProduct} not exists`);
+        }
+
+        const existsProductInCart = cart.products.some((p) => p.idProduct === idProduct);
+
+        if (!existsProductInCart) {
+            throw new Error(`Product with id ${idProduct} not exists in cart with id ${idCart}`);
+        }
+
+        const product = cart.products.find((p) => p.idProduct === idProduct);
+
+        return { id: cart.id, products: product };
     };
 
     deleteCart = async (id) => {
-        try {
-            await this.#setCarts();
-            if (this.carts.some((c) => c.id === id)) {
-                this.carts = this.carts.filter((c) => c.id !== id);
+        await this.#loadCarts();
 
-                await fs.writeFile(this.path, JSON.stringify(this.carts));
-            } else {
-                console.error("Not found");
-            }
-        } catch {
-            throw new Error("Something went wrong");
+        const existsCart = this.carts.some((c) => c.id === id);
+
+        if (!existsCart) {
+            throw new Error(`Cart with id ${id} not exists`);
         }
+
+        this.carts = this.carts.filter((c) => c.id !== id);
+
+        await fs.writeFile(this.path, JSON.stringify(this.carts));
     };
 
-    #setCarts = async () => {
+    #loadCarts = async () => {
         try {
             this.carts = JSON.parse(await fs.readFile(this.path, "utf-8"));
         } catch {
