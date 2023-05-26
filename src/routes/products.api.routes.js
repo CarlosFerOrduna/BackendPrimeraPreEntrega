@@ -1,4 +1,3 @@
-//@ts-check
 import express from "express";
 import productManager from "../services/ProductManager.js";
 import { uploader } from "../utils.js";
@@ -16,7 +15,7 @@ routerApiProducts.get("/", async (req, res) => {
 
         return res.status(200).json({
             status: "success",
-            message: `limit = ${limitNumber}`,
+            message: `Products limited to ${limitNumber}`,
             data: product.slice(0, limitNumber),
         });
     }
@@ -35,7 +34,7 @@ routerApiProducts.get("/:pid", async (req, res) => {
     if (product) {
         return res.status(200).json({
             status: "success",
-            message: "Product successfully found",
+            message: `Product id ${product.id} successfully found`,
             data: product,
         });
     }
@@ -54,7 +53,7 @@ routerApiProducts.post("/", uploader.single("thumbnail"), async (req, res) => {
 
         return res.status(201).json({
             status: "success",
-            msg: `Successfully created product`,
+            msg: `product id ${newProduct.id} successfully created`,
             data: newProduct,
         });
     }
@@ -77,7 +76,7 @@ routerApiProducts.put("/:pid", uploader.single("file"), async (req, res) => {
 
         return res.status(201).json({
             status: "success",
-            msg: `Product successfully updated`,
+            msg: `Product id ${resultProduct.id} successfully updated`,
             data: resultProduct,
         });
     }

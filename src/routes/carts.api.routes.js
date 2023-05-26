@@ -11,7 +11,7 @@ routerApiCarts.get("/", async (req, res) => {
 
     return res.status(200).json({
         status: "success",
-        message: "Cart successfully found",
+        message: "All Carts",
         data: carts,
     });
 });
@@ -23,7 +23,7 @@ routerApiCarts.get("/:cid", async (req, res) => {
     if (cart) {
         return res.status(200).json({
             status: "success",
-            message: "Cart successfully found",
+            message: `Cart id ${cart.id} successfully found`,
             data: cart,
         });
     }
@@ -40,7 +40,7 @@ routerApiCarts.get("/:cid/:pid", async (req, res) => {
 
         return res.status(200).json({
             status: "success",
-            message: "Cart and product successfully found",
+            message: `Product id ${idProduct} successfully found in cart id ${idCart}`,
             data: result,
         });
     }
@@ -66,7 +66,7 @@ routerApiCarts.post("/", async (req, res) => {
 
     return res.status(201).json({
         status: "success",
-        msg: `Successfully created cart`,
+        msg: `Successfully cart created`,
         data: cart,
     });
 });
@@ -81,7 +81,7 @@ routerApiCarts.post("/:cid/products/:pid", async (req, res) => {
 
         return res.status(201).json({
             status: "success",
-            msg: `Cart successfully updated`,
+            msg: `Product id ${idProduct} was successfully added to cart id ${idCart}`,
             data: result,
         });
     }
@@ -98,7 +98,7 @@ routerApiCarts.put("/:cid", async (req, res) => {
 
         return res.status(201).json({
             status: "success",
-            msg: `Cart successfully updated`,
+            msg: `Cart id ${result.id} successfully updated`,
             data: result,
         });
     }
