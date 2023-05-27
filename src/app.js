@@ -14,7 +14,7 @@ app.engine("handlebars", handlebars.engine());
 app.set("views", path.resolve("./src/views"));
 app.set("view engine", "handlebars");
 
-app.use(express.static(path.resolve(".src/public")));
+app.use(express.static(path.resolve("./src/public")));
 
 app.use("/api/products", routerApiProducts);
 app.use("/api/carts", routerApiCarts);

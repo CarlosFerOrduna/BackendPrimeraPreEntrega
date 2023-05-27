@@ -45,7 +45,7 @@ routerApiProducts.get("/:pid", async (req, res) => {
 routerApiProducts.post("/", uploader.single("thumbnail"), async (req, res) => {
     const product = {
         ...req?.body,
-        thumbnail: `$http://localhost:8080/${req?.file?.filename}` ?? null,
+        thumbnail: req?.file?.filename && `http://localhost:8080/${req?.file?.filename}`,
     };
 
     if (product) {
